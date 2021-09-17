@@ -82,23 +82,17 @@ endif ()
 FetchContent_Declare(
 	LibTorch
 	URL ${TORCH_URL}
+	SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/torch
 )
 FetchContent_MakeAvailable(LibTorch)
-file(COPY
-	${libtorch_SOURCE_DIR}/bin
-	${libtorch_SOURCE_DIR}/include
-	${libtorch_SOURCE_DIR}/lib
-	${libtorch_SOURCE_DIR}/share
-	DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}
-)
 
 file(CREATE_LINK
-	${CMAKE_CURRENT_SOURCE_DIR}/lib/libnvToolsExt-24de1d56.so.1
-	${CMAKE_CURRENT_SOURCE_DIR}/lib/libnvToolsExt.so.1
+	${libtorch_SOURCE_DIR}/lib/libnvToolsExt-24de1d56.so.1
+	${libtorch_SOURCE_DIR}/lib/libnvToolsExt.so.1
 )
 file(CREATE_LINK
-	${CMAKE_CURRENT_SOURCE_DIR}/lib/libcudart-6d56b25a.so.11.0
-	${CMAKE_CURRENT_SOURCE_DIR}/lib/libcudart.so.11.0
+	${libtorch_SOURCE_DIR}/lib/libcudart-6d56b25a.so.11.0
+	${libtorch_SOURCE_DIR}/lib/libcudart.so.11.0
 )
 
 ### VoiceVox Core ###
@@ -129,7 +123,10 @@ file(COPY
 	${VV_BINS}
 	DESTINATION ${CMAKE_BINARY_DIR}
 )
-execute_process(COMMAND
-	chrpath -r ${CMAKE_CURRENT_SOURCE_DIR}/lib
-		${CMAKE_CURRENT_SOURCE_DIR}/lib/libcore.so
-)
+
+if (UNIX)
+	execute_process(COMMAND
+		chrpath -r ${libtorch_SOURCE_DIR}/lib
+			${CMAKE_CURRENT_SOURCE_DIR}/lib/libcore.so
+	)
+endif (UNIX)
