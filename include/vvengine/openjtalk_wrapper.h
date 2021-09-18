@@ -10,8 +10,8 @@ namespace vvengine {
     public:
     OpenJtalkWrapper();
     ~OpenJtalkWrapper();
-    int Initialize();
-    int Load(const char* mecabDir);
+    bool Initialize();
+    bool Load(const char* mecabDir);
     void ExtractFullContext(const char* text, std::vector<std::string>& labels);
 
     protected:

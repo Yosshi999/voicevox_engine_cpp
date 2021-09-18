@@ -40,24 +40,20 @@ struct OpenJtalkWrapper::Impl {
 
 OpenJtalkWrapper::OpenJtalkWrapper() : impl(new Impl) {}
 OpenJtalkWrapper::~OpenJtalkWrapper() {}
-int OpenJtalkWrapper::Initialize() {
+bool OpenJtalkWrapper::Initialize() {
   BOOL mecabState;
 
   mecabState = Mecab_initialize(impl->mecab);
-  std::cout << "Mecab_initialize: " << mecabState << std::endl;
   NJD_initialize(impl->njd);
   JPCommon_initialize(impl->jpcommon);
 
-  return 0;
+  return mecabState == TRUE;
 }
 
-int OpenJtalkWrapper::Load(const char* mecabDir) {
+bool OpenJtalkWrapper::Load(const char* mecabDir) {
   BOOL mecabState;
   mecabState = Mecab_load(impl->mecab, mecabDir);
-  std::cout << "Mecab_load: " << mecabState << std::endl;
-  if (mecabState == FALSE) return -1;
-
-  return 0;
+  return mecabState == TRUE;
 }
 
 void OpenJtalkWrapper::ExtractFullContext(const char* text,
@@ -67,7 +63,6 @@ void OpenJtalkWrapper::ExtractFullContext(const char* text,
 
   text2mecab(buff, text);
   mecabState = Mecab_analysis(impl->mecab, buff);
-  std::cout << "Mecab_analysis: " << mecabState << std::endl;
   mecab2njd(impl->njd, impl->mecab->feature, impl->mecab->size);
   njd_set_pronunciation(impl->njd);
   njd_set_digit(impl->njd);
