@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-set(VOICEVOX_CORE_VERSION 0.5.2)
+set(VOICEVOX_CORE_VERSION 0.5.4)
 set(MECAB_DIR_NAME open_jtalk_dic_utf_8-1.11)
 set(MECAB_DIR_PATH "${CMAKE_BINARY_DIR}/${MECAB_DIR_NAME}" CACHE PATH "")
 
@@ -51,8 +51,7 @@ file(DOWNLOAD
 
 ### LibTorch ###
 message("downloading LibTorch...")
-if (true)
-# Currently we have to download cuda version regardless of `USE_CUDA`
+if (USE_CUDA)
 	if (WIN32)
 		message( "Windows gpu" )
 		set(TORCH_URL https://download.pytorch.org/libtorch/cu111/libtorch-win-shared-with-deps-1.9.0%2Bcu111.zip)
@@ -86,14 +85,16 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(LibTorch)
 
-file(CREATE_LINK
-	${libtorch_SOURCE_DIR}/lib/libnvToolsExt-24de1d56.so.1
-	${libtorch_SOURCE_DIR}/lib/libnvToolsExt.so.1
-)
-file(CREATE_LINK
-	${libtorch_SOURCE_DIR}/lib/libcudart-6d56b25a.so.11.0
-	${libtorch_SOURCE_DIR}/lib/libcudart.so.11.0
-)
+if (UNIX AND USE_CUDA)
+	file(CREATE_LINK
+		${libtorch_SOURCE_DIR}/lib/libnvToolsExt-24de1d56.so.1
+		${libtorch_SOURCE_DIR}/lib/libnvToolsExt.so.1
+	)
+	file(CREATE_LINK
+		${libtorch_SOURCE_DIR}/lib/libcudart-6d56b25a.so.11.0
+		${libtorch_SOURCE_DIR}/lib/libcudart.so.11.0
+	)
+endif ()
 
 ### VoiceVox Core ###
 message("downloading VoiceVoxCore...")
@@ -125,8 +126,14 @@ file(COPY
 )
 
 if (UNIX)
-	execute_process(COMMAND
-		chrpath -r ${libtorch_SOURCE_DIR}/lib
-			${CMAKE_CURRENT_SOURCE_DIR}/lib/libcore.so
-	)
+	set(TORCHLIB ${libtorch_SOURCE_DIR}/lib)
+	set(CORESO ${CMAKE_CURRENT_SOURCE_DIR}/lib/libcore.so)
+	execute_process(COMMAND patchelf --set-rpath ${TORCHLIB} ${CORESO})
+	if (NOT USE_CUDA)
+		execute_process(COMMAND patchelf --remove-needed libtorch_cuda.so ${CORESO})
+		execute_process(COMMAND patchelf --remove-needed libtorch_cuda_cpp.so ${CORESO})
+		execute_process(COMMAND patchelf --remove-needed libtorch_cuda_cu.so ${CORESO})
+		execute_process(COMMAND patchelf --remove-needed libnvToolsExt.so.1 ${CORESO})
+		execute_process(COMMAND patchelf --remove-needed libcudart.so.11.0 ${CORESO})
+	endif ()
 endif (UNIX)
