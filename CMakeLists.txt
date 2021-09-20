@@ -4,6 +4,7 @@ project(VoiceVoxCPP)
 set(USE_CUDA OFF CACHE BOOL "use CUDA")
 
 add_subdirectory(third_party)
+find_package(Boost 1.71 REQUIRED) # header only
 
 add_library(vvengine STATIC
 	src/audio_writer.cc
