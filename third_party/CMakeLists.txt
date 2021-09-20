@@ -114,11 +114,15 @@ FetchContent_Declare(
 	URL https://github.com/Hiroshiba/voicevox_core/releases/download/${VOICEVOX_CORE_VERSION}/core.zip
 )
 FetchContent_MakeAvailable(voicevox_core_lib)
-file(COPY
-	${voicevox_core_lib_SOURCE_DIR}/libcore.so
-	${voicevox_core_lib_SOURCE_DIR}/core.dll
-	DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/lib
-)
+if (UNIX)
+	file(COPY
+		${voicevox_core_lib_SOURCE_DIR}/libcore.so
+		${voicevox_core_lib_SOURCE_DIR}/libcore_cpu.so
+		${voicevox_core_lib_SOURCE_DIR}/core.dll
+		${voicevox_core_lib_SOURCE_DIR}/core_cpu.dll
+		DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/lib
+	)
+endif (UNIX)
 file(GLOB VV_BINS "${voicevox_core_lib_SOURCE_DIR}/*.bin")
 file(COPY
 	${VV_BINS}
@@ -126,14 +130,12 @@ file(COPY
 )
 
 if (UNIX)
-	set(TORCHLIB ${libtorch_SOURCE_DIR}/lib)
-	set(CORESO ${CMAKE_CURRENT_SOURCE_DIR}/lib/libcore.so)
-	execute_process(COMMAND patchelf --set-rpath ${TORCHLIB} ${CORESO})
-	if (NOT USE_CUDA)
-		execute_process(COMMAND patchelf --remove-needed libtorch_cuda.so ${CORESO})
-		execute_process(COMMAND patchelf --remove-needed libtorch_cuda_cpp.so ${CORESO})
-		execute_process(COMMAND patchelf --remove-needed libtorch_cuda_cu.so ${CORESO})
-		execute_process(COMMAND patchelf --remove-needed libnvToolsExt.so.1 ${CORESO})
-		execute_process(COMMAND patchelf --remove-needed libcudart.so.11.0 ${CORESO})
-	endif ()
+	execute_process(COMMAND
+		chrpath -r ${libtorch_SOURCE_DIR}/lib
+			${CMAKE_CURRENT_SOURCE_DIR}/lib/libcore.so
+	)
+	execute_process(COMMAND
+		chrpath -r ${libtorch_SOURCE_DIR}/lib
+			${CMAKE_CURRENT_SOURCE_DIR}/lib/libcore_cpu.so
+	)
 endif (UNIX)
