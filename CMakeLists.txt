@@ -5,21 +5,36 @@ set(USE_CUDA OFF CACHE BOOL "use CUDA")
 
 add_subdirectory(third_party)
 
-file(GLOB SRC_FILES "src/*.cc")
-add_executable(vv ${SRC_FILES})
-add_dependencies(vv open_jtalk)
+add_library(vvengine STATIC
+	src/audio_writer.cc
+	src/engine.cc
+	src/full_context_label.cc
+	src/openjtalk_wrapper.cc
+)
+add_dependencies(vvengine open_jtalk)
+set_property(TARGET vvengine PROPERTY CXX_STANDARD 17)
+target_compile_options(vvengine PUBLIC -g -O2 -Wall)
 
-add_compile_options("-g -O2")
+target_include_directories(vvengine PRIVATE third_party/include)
+target_include_directories(vvengine PUBLIC include)
+target_link_directories(vvengine PRIVATE third_party/lib)
+target_link_libraries(vvengine PRIVATE core openjtalk)
+
+message("mecab dir: ${MECAB_DIR_PATH}")
+add_definitions(-DMECAB_DIR=\"${MECAB_DIR_PATH}\")
+
+add_executable(vv src/vv.cc)
+add_dependencies(vv vvengine)
 set_property(TARGET vv PROPERTY CXX_STANDARD 17)
+target_compile_options(vv PUBLIC -g -O2 -Wall)
 
-target_include_directories(vv PRIVATE third_party/include)
-target_include_directories(vv PUBLIC include)
+target_include_directories(vv PRIVATE include)
+target_link_directories(vv PRIVATE third_party/lib)
+target_link_libraries(vv PRIVATE vvengine)
 
 if (USE_CUDA)
 	add_definitions(-DUSE_CUDA)
 endif ()
-message("mecab dir: ${MECAB_DIR_PATH}")
-add_definitions(-DMECAB_DIR=\"${MECAB_DIR_PATH}\")
 
 if (MSVC)
 	file(GLOB TORCH_DLLS "third_party/lib/*.dll")
@@ -32,5 +47,3 @@ if (MSVC)
 	)
 endif (MSVC)
 
-target_link_directories(vv PRIVATE third_party/lib)
-target_link_libraries(vv core openjtalk)
