@@ -138,4 +138,8 @@ if (UNIX)
 		chrpath -r ${libtorch_SOURCE_DIR}/lib
 			${CMAKE_CURRENT_SOURCE_DIR}/lib/libcore_cpu.so
 	)
+	execute_process(COMMAND
+		patchelf --set-soname libcore_cpu.so
+			${CMAKE_CURRENT_SOURCE_DIR}/lib/libcore_cpu.so
+	)
 endif (UNIX)
